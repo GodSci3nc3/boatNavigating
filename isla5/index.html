@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Navegación entre Islas</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    :root {
+      --primary: #1a3a5f;
+      --secondary: #3498db;
+      --accent: #f39c12;
+      --text: #ecf0f1;
+      --dark: #2c3e50;
+      --light: #f5f5f5;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    body {
+      background-color: #0a192f;
+      color: var(--text);
+      overflow: hidden;
+    }
+    
+    .container {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .island-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .island-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 1.5s ease-in-out;
+    }
+    
+    .controls {
+      background-color: rgba(26, 58, 95, 0.85);
+      backdrop-filter: blur(8px);
+      padding: 20px;
+      border-top: 4px solid var(--accent);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    
+    .status-section {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
+    .status-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    .status-icon {
+      margin-right: 10px;
+      color: var(--accent);
+      font-size: 24px;
+    }
+    
+    .status {
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--text);
+    }
+    
+    #moveForm {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    
+    label {
+      font-weight: 600;
+      color: var(--light);
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+    }
+    
+    label i {
+      margin-right: 8px;
+      color: var(--accent);
+    }
+    
+    select {
+      background-color: var(--light);
+      border: none;
+      border-radius: 5px;
+      padding: 10px 15px;
+      font-size: 16px;
+      color: var(--dark);
+      cursor: pointer;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+    
+    select:hover, select:focus {
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+    
+    button {
+      background-color: var(--accent);
+      color: var(--dark);
+      border: none;
+      border-radius: 5px;
+      padding: 10px 20px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    button:hover {
+      background-color: #e67e22;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    .progress-bar {
+      height: 4px;
+      width: 100%;
+      background-color: var(--primary);
+      position: relative;
+      overflow: hidden;
+      margin-top: 10px;
+      border-radius: 2px;
+      display: none;
+    }
+    
+    .progress-value {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      background-color: var(--accent);
+      width: 0%;
+      transition: width 10s linear;
+    }
+    
+    .island-info {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background-color: rgba(26, 58, 95, 0.75);
+      backdrop-filter: blur(4px);
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid var(--accent);
+      max-width: 300px;
+    }
+    
+    .island-name {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 5px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    
+    .compass {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      width: 80px;
+      height: 80px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%232c3e50' stroke='%23f39c12' stroke-width='2'/%3E%3Cpath d='M50 5 L55 50 L50 95 L45 50 Z' fill='%23e74c3c'/%3E%3Cpath d='M5 50 L50 45 L95 50 L50 55 Z' fill='%233498db'/%3E%3Ccircle cx='50' cy='50' r='5' fill='%23f39c12'/%3E%3Ctext x='48' y='25' fill='%23fff' font-size='10' text-anchor='middle'%3EN%3C/text%3E%3Ctext x='48' y='85' fill='%23fff' font-size='10' text-anchor='middle'%3ES%3C/text%3E%3Ctext x='15' y='52' fill='%23fff' font-size='10' text-anchor='middle'%3EW%3C/text%3E%3Ctext x='85' y='52' fill='%23fff' font-size='10' text-anchor='middle'%3EE%3C/text%3E%3C/svg%3E") no-repeat center/contain;
+      opacity: 0.8;
+      transition: transform 1s ease;
+    }
+    
+    .waves {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 50px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%233498db' fill-opacity='0.5' d='M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E") repeat-x;
+      animation: wave 10s linear infinite;
+      opacity: 0.8;
+      pointer-events: none;
+    }
+    
+    @keyframes wave {
+      0% {
+        background-position: 0 0;
+      }
+      100% {
+        background-position: 1440px 0;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .status-section {
+        margin-bottom: 15px;
+      }
+      
+      #moveForm {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .island-info {
+        max-width: 80%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="island-container">
+      <img id="islandImage" class="island-image" src="islaConBarco.png" alt="Isla con barco">
+      <div class="island-info">
+        <h2 id="islandTitle" class="island-name">Isla Actual</h2>
+        <p id="islandDescription">Explorando esta isla...</p>
+      </div>
+      <div class="compass"></div>
+      <div class="waves"></div>
+    </div>
+    
+    <div class="controls">
+      <div class="status-section">
+        <div class="status-row">
+          <div class="status-icon">
+            <i class="fas fa-map-pin"></i>
+          </div>
+          <div class="status" id="currentLocation">Ubicación actual: Cargando...</div>
+        </div>
+        <div class="status-row">
+          <div class="status-icon">
+            <i class="fas fa-anchor"></i>
+          </div>
+          <div class="status" id="status">Estado del barco: Cargando...</div>
+        </div>
+        <div class="progress-bar" id="progressBar">
+          <div class="progress-value" id="progressValue"></div>
+        </div>
+      </div>
+      
+      <form id="moveForm">
+        <label for="island"><i class="fas fa-map-marked-alt"></i> Destino:</label>
+        <select id="island" name="island">
+          <option value="isla1">Isla del Tesoro</option>
+          <option value="isla2">Bahía de los Piratas</option>
+          <option value="isla3">Arrecife de Coral</option>
+          <option value="isla4">Isla Volcánica</option>
+          <option value="isla5">Puerto Comercial</option>
+        </select>
+        <button type="submit">
+          <i class="fas fa-ship"></i>
+          Zarpar
+        </button>
+      </form>
+    </div>
+  </div>
+  
+  <script>
+    // Elementos del DOM
+    const islandImage = document.getElementById('islandImage');
+    const status = document.getElementById('status');
+    const currentLocation = document.getElementById('currentLocation');
+    const progressBar = document.getElementById('progressBar');
+    const progressValue = document.getElementById('progressValue');
+    const islandTitle = document.getElementById('islandTitle');
+    const islandDescription = document.getElementById('islandDescription');
+    const compass = document.querySelector('.compass');
+    
+    // Datos de las islas
+    const islandData = {
+      'isla1': {
+        name: 'Isla del Tesoro',
+        description: 'Una isla legendaria donde se dice que hay tesoros enterrados por antiguos piratas.'
+      },
+      'isla2': {
+        name: 'Bahía de los Piratas',
+        description: 'Un refugio para los más temidos navegantes de los siete mares.'
+      },
+      'isla3': {
+        name: 'Arrecife de Coral',
+        description: 'Aguas cristalinas y vida marina abundante rodean esta colorida isla.'
+      },
+      'isla4': {
+        name: 'Isla Volcánica',
+        description: 'Una isla dominada por un imponente volcán que ocasionalmente muestra su actividad.'
+      },
+      'isla5': {
+        name: 'Puerto Comercial',
+        description: 'Un punto de encuentro para mercaderes y navegantes de todos los rincones del mundo.'
+      }
+    };
+    
+    // Determinar qué isla es la actual basada en la URL
+    function getCurrentIslandFromURL() {
+      const path = window.location.pathname;
+      
+      if (path.includes('/isla1/')) {
+        return 'isla1';
+      } else if (path.includes('/isla2/')) {
+        return 'isla2';
+      } else if (path.includes('/isla3/')) {
+        return 'isla3';
+      } else if (path.includes('/isla4/')) {
+        return 'isla4';
+      } else if (path.includes('/isla5/')) {
+        return 'isla5';
+      }
+      
+      // Si no podemos determinar la isla, usamos la API
+      return null;
+    }
+    
+    // Función para obtener el estado actual del barco
+    function getBoatStatus() {
+      // Primero intentamos determinar la isla actual por la URL
+      const currentIslandByURL = getCurrentIslandFromURL();
+      
+      if (currentIslandByURL) {
+        // Si estamos en una página de isla específica, actualizamos la información local
+        updateLocalIslandInfo(currentIslandByURL);
+      }
+      
+      // De todas formas consultamos a la API para saber dónde está el barco
+      fetch("http://69.55.60.119:3000/current-island")
+        .then(response => response.json())
+        .then(data => {
+          updateBoatStatus(data.currentIsland);
+        })
+        .catch(error => {
+          console.error('Error al obtener el estado del barco:', error);
+          status.textContent = "Estado del barco: Error al obtener el estado";
+          status.style.color = "#e74c3c";
+        });
+    }
+    
+    // Función para actualizar información local de la isla (basada en URL)
+    function updateLocalIslandInfo(islandId) {
+      if (islandData[islandId]) {
+        islandTitle.textContent = islandData[islandId].name;
+        islandDescription.textContent = islandData[islandId].description;
+        currentLocation.textContent = `Ubicación actual: ${islandData[islandId].name}`;
+      }
+    }
+    
+    // Función para actualizar el estado del barco (basada en API)
+    function updateBoatStatus(boatIslandId) {
+      const currentIslandByURL = getCurrentIslandFromURL() || boatIslandId;
+      
+      // Verificamos si el barco está en esta isla (comparando URL con estado API)
+      if (boatIslandId === currentIslandByURL) {
+        status.textContent = `Estado del barco: Anclado en este puerto`;
+        status.style.color = "#2ecc71";  // Verde
+        islandImage.src = "islaConBarco.png";
+      } else {
+        status.textContent = `Estado del barco: En ${islandData[boatIslandId].name}`;
+        status.style.color = "#3498db";  // Azul
+        islandImage.src = "islaSinBarco.png";
+      }
+      
+      // Rotamos la brújula dependiendo de la isla actual (URL)
+      rotateCompass(currentIslandByURL);
+    }
+    
+    // Función para rotar la brújula según la isla
+    function rotateCompass(islandId) {
+      const rotations = {
+        'isla1': '0deg',
+        'isla2': '45deg',
+        'isla3': '90deg',
+        'isla4': '180deg',
+        'isla5': '270deg'
+      };
+      
+      compass.style.transform = `rotate(${rotations[islandId] || '0deg'})`;
+    }
+    
+    // Llamamos a la función para obtener el estado al cargar la página
+    document.addEventListener('DOMContentLoaded', () => {
+      getBoatStatus();
+    });
+    
+    // Manejador de la acción del formulario para mover el barco
+    document.getElementById('moveForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+      
+      const destinationId = document.getElementById('island').value;
+      const destinationName = islandData[destinationId].name;
+      
+      // Mostrar estado "En camino"
+      status.textContent = `Estado del barco: ¡Zarpando hacia ${destinationName}!`;
+      status.style.color = "#f39c12";  // Amarillo/naranja
+      
+      // Cambiar imagen a "en camino"
+      islandImage.src = "islaEnCamino.png";
+      islandImage.style.transform = "scale(1.05)";
+      
+      // Mostrar barra de progreso
+      progressBar.style.display = "block";
+      progressValue.style.width = "0%";
+      
+      // Animar barra de progreso
+      setTimeout(() => {
+        progressValue.style.width = "100%";
+      }, 100);
+      
+      // Enviar petición al servidor
+      fetch('http://69.55.60.119:3000/move-boat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ destination: destinationId })
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Después de 10 segundos
+        setTimeout(() => {
+          // Actualizamos el estado para mostrar que el barco se ha ido
+          const currentIslandByURL = getCurrentIslandFromURL();
+          
+          // Si estamos en la isla de destino, mostramos el barco
+          if (currentIslandByURL === data.newIsland) {
+            status.textContent = `Estado del barco: Ha llegado a este puerto`;
+            status.style.color = "#2ecc71";  // Verde
+            islandImage.src = "islaConBarco.png";
+          } else {
+            // Si no estamos en la isla de destino, mostramos que el barco se ha ido
+            status.textContent = `Estado del barco: En ${islandData[data.newIsland].name}`;
+            status.style.color = "#3498db";  // Azul
+            islandImage.src = "islaSinBarco.png";
+          }
+          
+          islandImage.style.transform = "scale(1)";
+          
+          // Ocultar barra de progreso
+          setTimeout(() => {
+            progressBar.style.display = "none";
+          }, 1000);
+          
+          // Sugerimos al usuario que puede ir a la isla donde está el barco
+          if (currentIslandByURL !== data.newIsland) {
+            const portLink = `http://69.55.60.119:8080/${data.newIsland}/`;
+            console.log(`Puedes visitar la isla en: ${portLink}`);
+          }
+        }, 10000);
+      })
+      .catch(error => {
+        status.textContent = "Estado del barco: Error al mover el barco";
+        status.style.color = "#e74c3c";  // Rojo
+        islandImage.src = "islaConBarco.png";
+        progressBar.style.display = "none";
+      });
+    });
+  </script>
+</body>
+</html>
